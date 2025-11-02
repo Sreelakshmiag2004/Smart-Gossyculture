@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'dashboard.dart'; // <-- Import your Dashboard page
+import 'dashboard.dart';
+import 'pest_alerts_page.dart';
+import 'notifications_page.dart';
+import 'settings_profile_page.dart';
 
 class Harvest extends StatelessWidget {
   const Harvest({super.key});
@@ -92,12 +95,25 @@ class Harvest extends StatelessWidget {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const Dashboard()),
             );
+          } else if (index == 2) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const PestAlertsPage()),
+            );
+          } else if (index == 3) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                  builder: (context) => const NotificationsPage()),
+            );
+          } else if (index == 4) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                  builder: (context) => const SettingsProfilePage()),
+            );
           }
-          // Add navigation for other tabs if needed
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined), // Match Dashboard.dart icon
+            icon: Icon(Icons.home_outlined),
             label: 'Dashboard',
           ),
           BottomNavigationBarItem(
@@ -107,6 +123,10 @@ class Harvest extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.bug_report_outlined),
             label: 'Pests',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_outlined),
+            label: 'Notifications',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
@@ -431,8 +451,8 @@ class _LogEntryCard extends StatelessWidget {
                 const Spacer(),
                 if (showStatusLabel)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusColor!.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),

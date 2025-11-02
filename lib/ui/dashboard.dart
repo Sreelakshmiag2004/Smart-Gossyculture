@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
-import 'Harvest.dart'; // <-- Import your Harvest page
+import 'Harvest.dart';
+import 'pest_alerts_page.dart';
+import 'settings_profile_page.dart';
+import 'notifications_page.dart';
+import 'package:qr_code_scanner/qr_code_scanner.dart'; // Add this for Google QR scanner
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
+
+  void _openQRScanner(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const QRViewExample(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,13 +35,30 @@ class Dashboard extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none, color: Colors.black),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsPage(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.black),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SettingsProfilePage(),
+                ),
+              );
+            },
           ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: CircleAvatar(
               radius: 18,
-              backgroundImage: AssetImage('assets/profile.jpg'),
+              backgroundColor: Colors.green[100],
+              child: const Icon(Icons.person, color: Colors.green),
             ),
           ),
         ],
@@ -104,7 +133,8 @@ class Dashboard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.all(8),
-                    child: const Icon(Icons.eco, color: Color(0xFF5FA62C), size: 28),
+                    child: const Icon(Icons.eco,
+                        color: Color(0xFF5FA62C), size: 28),
                   ),
                 ],
               ),
@@ -133,13 +163,10 @@ class Dashboard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            Flexible(
-                              child: Image.asset(
-                                'assets/moisture_level.png',
-                                height: 18,
-                                width: 18,
-                                fit: BoxFit.contain,
-                              ),
+                            const Icon(
+                              Icons.water_drop,
+                              color: Color(0xFF00B2FF),
+                              size: 18,
                             ),
                           ],
                         ),
@@ -186,20 +213,18 @@ class Dashboard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            Flexible(
-                              child: Image.asset(
-                                'assets/Power.png',
-                                height: 18,
-                                width: 18,
-                                fit: BoxFit.contain,
-                              ),
+                            const Icon(
+                              Icons.power,
+                              color: Color(0xFF5FA62C),
+                              size: 18,
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: const [
-                            Icon(Icons.flash_on, color: Color(0xFF00B2FF), size: 18),
+                            Icon(Icons.flash_on,
+                                color: Color(0xFF00B2FF), size: 18),
                             SizedBox(width: 4),
                             Text(
                               'Solar: 95%',
@@ -214,7 +239,8 @@ class Dashboard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: const [
-                            Icon(Icons.battery_full, color: Color(0xFF6E7A89), size: 18),
+                            Icon(Icons.battery_full,
+                                color: Color(0xFF6E7A89), size: 18),
                             SizedBox(width: 4),
                             Text(
                               'Battery: 82%',
@@ -253,7 +279,8 @@ class Dashboard extends StatelessWidget {
                         ),
                       ),
                       Spacer(),
-                      Icon(Icons.warning_amber_rounded, color: Color(0xFFFF4D4F), size: 22),
+                      Icon(Icons.warning_amber_rounded,
+                          color: Color(0xFFFF4D4F), size: 22),
                     ],
                   ),
                   SizedBox(height: 8),
@@ -277,35 +304,42 @@ class Dashboard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 1.4,
-              children: [
-                _DashboardButton(
-                  icon: Icons.remove_red_eye_outlined,
-                  label: 'Monitor Crops',
-                  onTap: () {},
-                ),
-                _DashboardButton(
-                  icon: Icons.library_books_outlined,
-                  label: 'View Logs',
-                  onTap: () {},
-                ),
-                _DashboardButton(
-                  icon: Icons.qr_code_scanner,
-                  label: 'Scan for Pests',
-                  onTap: () {},
-                ),
-                _DashboardButton(
-                  icon: Icons.storefront_outlined,
-                  label: 'Marketplace',
-                  onTap: () {},
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio:
+                      constraints.maxWidth < 400 ? 1.1 : 1.4,
+                  children: [
+                    _DashboardButton(
+                      icon: Icons.remove_red_eye_outlined,
+                      label: 'Monitor Crops',
+                      onTap: () {},
+                    ),
+                    _DashboardButton(
+                      icon: Icons.library_books_outlined,
+                      label: 'View Logs',
+                      onTap: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (context) => const Harvest()),
+                        );
+                      },
+                    ),
+                    _DashboardButton(
+                      icon: Icons.qr_code_scanner,
+                      label: 'Scan for Pests',
+                      onTap: () => _openQRScanner(context), // Open Google QR scanner
+                    ),
+                    _DashboardButton(
+                      icon: Icons.storefront_outlined,
+                      label: 'Marketplace',
+                      onTap: () {},
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
           ],
@@ -322,6 +356,20 @@ class Dashboard extends StatelessWidget {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const Harvest()),
             );
+          } else if (index == 2) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const PestAlertsPage()),
+            );
+          } else if (index == 3) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                  builder: (context) => const NotificationsPage()),
+            );
+          } else if (index == 4) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                  builder: (context) => const SettingsProfilePage()),
+            );
           }
           // Add navigation for other tabs if needed
         },
@@ -337,6 +385,10 @@ class Dashboard extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.bug_report_outlined),
             label: 'Pests',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_outlined),
+            label: 'Notifications',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
@@ -388,5 +440,71 @@ class _DashboardButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// Add this QRViewExample widget for QR code scanning
+class QRViewExample extends StatefulWidget {
+  const QRViewExample({Key? key}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() => _QRViewExampleState();
+}
+
+class _QRViewExampleState extends State<QRViewExample> {
+  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  Barcode? result;
+  QRViewController? controller;
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    if (controller != null) {
+      controller!.pauseCamera();
+      controller!.resumeCamera();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Scan QR Code')),
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            flex: 5,
+            child: QRView(
+              key: qrKey,
+              onQRViewCreated: _onQRViewCreated,
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: (result != null)
+                  ? Text('Barcode: ${result!.code}')
+                  : const Text('Scan a code'),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _onQRViewCreated(QRViewController controller) {
+    setState(() {
+      this.controller = controller;
+    });
+    controller.scannedDataStream.listen((scanData) {
+      setState(() {
+        result = scanData;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
   }
 }
