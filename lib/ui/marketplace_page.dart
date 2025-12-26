@@ -4,7 +4,9 @@ import 'dashboard.dart';
 import 'Harvest.dart';
 import 'pest_alerts_page.dart';
 import 'notifications_page.dart';
+
 import 'settings_profile_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MarketplacePage extends StatefulWidget {
   const MarketplacePage({super.key});
@@ -22,6 +24,28 @@ class _MarketplacePageState extends State<MarketplacePage> {
       TextEditingController(text: '300');
 
   @override
+  void initState() {
+    super.initState();
+    _loadStockData();
+  }
+
+  Future<void> _loadStockData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      cottonBollsController.text = prefs.getString('stock_bolls') ?? '1200';
+      cottonLintController.text = prefs.getString('stock_lint') ?? '50';
+      cottonSeedsController.text = prefs.getString('stock_seeds') ?? '300';
+    });
+  }
+
+  Future<void> _saveStockData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('stock_bolls', cottonBollsController.text);
+    await prefs.setString('stock_lint', cottonLintController.text);
+    await prefs.setString('stock_seeds', cottonSeedsController.text);
+  }
+
+  @override
   void dispose() {
     cottonBollsController.dispose();
     cottonLintController.dispose();
@@ -32,26 +56,26 @@ class _MarketplacePageState extends State<MarketplacePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFFFAFAFA), // Matching Dashboard
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFAFAFA),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'Marketplace',
-          style: TextStyle(
+           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontSize: 20.0,
           ),
         ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -67,26 +91,30 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       'Cotton Lint', cottonLintController, 'bales'),
                   const SizedBox(height: 16),
                   _buildStockInput('Cotton Seeds', cottonSeedsController, 'kg'),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
+                    height: 48,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Handle update stock levels
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                                  Text('Stock levels updated successfully!')),
-                        );
+                      onPressed: () async {
+                        await _saveStockData();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Stock levels updated and saved!'),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: Color(0xFF5FA62C),
+                            ),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: const Color(0xFF5FA62C),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
                         elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: const Text(
                         'Update Stock Levels',
@@ -100,125 +128,78 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             // Future Stock Outlook Section
             _buildSectionCard(
               title: 'Future Stock Outlook',
               child: Container(
-                height: 200,
+                height: 220,
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 child: CustomPaint(
+                  size: Size.infinite,
                   painter: StockGraphPainter(),
-                  child: Container(),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             // Available Buyers Section
-            _buildSectionCard(
-              title: 'Available Buyers',
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    childAspectRatio:
-                        constraints.maxWidth < 400 ? 1.1 : 1.4,
-                    children: [
-                      _buildBuyerCard(
-                        companyName: 'AgriCorp Global',
-                        description:
-                            'Seeking 1000 bales of premium long-staple cotton monthly.',
-                        contactIcon: Icons.chat_bubble,
-                        contactText: 'Via Platform Chat',
-                      ),
-                      _buildBuyerCard(
-                        companyName: 'Textile Innovations Inc.',
-                        description:
-                            'Requires 500kg of organic cotton for sustainable fabrics.',
-                        contactIcon: Icons.email,
-                        contactText: 'Email: contact@textileinnov.com',
-                      ),
-                      _buildBuyerCard(
-                        companyName: 'Local Ginning Co.',
-                        description:
-                            'Purchasing raw cotton bolls weekly. Flexible volumes.',
-                        contactIcon: Icons.phone,
-                        contactText: 'Phone: +1 (555) 123-4567',
-                      ),
-                      _buildBuyerCard(
-                        companyName: 'Eco-Wear Apparel',
-                        description:
-                            'Looking for ethical and traceable cotton sources.',
-                        contactIcon: Icons.chat_bubble,
-                        contactText: 'Via Platform Chat',
-                      ),
-                    ],
-                  );
-                },
+            const Padding(
+              padding: EdgeInsets.only(left: 4, bottom: 12),
+              child: Text(
+                'Available Buyers',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.black87,
+                ),
               ),
+            ),
+            
+            ListView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildBuyerCard(
+                  companyName: 'AgriCorp Global',
+                  description:
+                      'Seeking 1000 bales of premium long-staple cotton monthly.',
+                  contactIcon: Icons.chat_bubble_outline,
+                  contactText: 'Platform Chat',
+                  tag: 'Premium Buyer',
+                ),
+                _buildBuyerCard(
+                  companyName: 'Textile Innovations',
+                  description:
+                      'Requires 500kg of organic cotton for sustainable fabrics.',
+                  contactIcon: Icons.email_outlined,
+                  contactText: 'contact@textileinnov.com',
+                  tag: 'Organic',
+                ),
+                _buildBuyerCard(
+                  companyName: 'Local Ginning Co.',
+                  description:
+                      'Purchasing raw cotton bolls weekly. Flexible volumes.',
+                  contactIcon: Icons.phone_outlined,
+                  contactText: '+1 (555) 123-4567',
+                  tag: 'Local',
+                ),
+                 _buildBuyerCard(
+                  companyName: 'Eco-Wear Apparel',
+                  description:
+                      'Looking for ethical and traceable cotton sources.',
+                  contactIcon: Icons.chat_bubble_outline,
+                  contactText: 'Platform Chat',
+                  tag: 'Ethical',
+                ),
+              ],
             ),
             const SizedBox(height: 24),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex:
-            0, // Dashboard tab is active (since this is accessed from dashboard)
-        selectedItemColor: const Color(0xFF5FA62C),
-        unselectedItemColor: Colors.black38,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const Dashboard()),
-            );
-          } else if (index == 1) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const Harvest()),
-            );
-          } else if (index == 2) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const PestAlertsPage()),
-            );
-          } else if (index == 3) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                  builder: (context) => const NotificationsPage()),
-            );
-          } else if (index == 4) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                  builder: (context) => const SettingsProfilePage()),
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt_outlined),
-            label: 'Logs',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bug_report_outlined),
-            label: 'Pests',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_outlined),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            label: 'Settings',
-          ),
-        ],
-      ),
+
     );
   }
 
@@ -229,17 +210,16 @@ class _MarketplacePageState extends State<MarketplacePage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -248,10 +228,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
-              color: Colors.black,
+              color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           child,
         ],
       ),
@@ -260,51 +240,49 @@ class _MarketplacePageState extends State<MarketplacePage> {
 
   Widget _buildStockInput(
       String label, TextEditingController controller, String unit) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        SizedBox(
-          width: 100,
-          child: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14),
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.green),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
         Text(
-          unit,
+          label,
           style: const TextStyle(
             fontSize: 14,
-            color: Colors.grey,
+            fontWeight: FontWeight.w600,
+            color: Colors.black54,
           ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                   color: const Color(0xFFF5F5F5),
+                   borderRadius: BorderRadius.circular(12),
+                   border: Border.all(color: Colors.transparent),
+                ),
+                child: TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              unit,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -315,96 +293,104 @@ class _MarketplacePageState extends State<MarketplacePage> {
     required String description,
     required IconData contactIcon,
     required String contactText,
+    required String tag,
   }) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(12),
-      child: Row(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: Colors.green,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: const Icon(
-              Icons.check,
-              color: Colors.white,
-              size: 20,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                companyName,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+              Container(
+                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                 decoration: BoxDecoration(
+                   color: const Color(0xFFE9F7E5),
+                   borderRadius: BorderRadius.circular(8),
+                 ),
+                 child: Text(
+                   tag,
+                   style: const TextStyle(
+                     color: Color(0xFF5FA62C),
+                     fontSize: 12,
+                     fontWeight: FontWeight.bold
+                   ),
+                 ),
+              )
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black54,
+              height: 1.4,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  companyName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: Row(
                   children: [
                     Icon(
                       contactIcon,
                       color: Colors.grey[600],
-                      size: 14,
+                      size: 16,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     Text(
                       contactText,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 13,
                         color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          ElevatedButton(
-            onPressed: () {
-              // Handle connect action
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Connecting with $companyName...')),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
               ),
-              elevation: 0,
-            ),
-            child: const Text(
-              'Connect',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
+              ElevatedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Connecting with $companyName...')),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF5FA62C),
+                  elevation: 0,
+                  side: const BorderSide(color: Color(0xFF5FA62C)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+                child: const Text('Connect'),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -416,19 +402,29 @@ class StockGraphPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black
+      ..color = Colors.black54
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
     final pointPaint = Paint()
-      ..color = Colors.black
+      ..color = const Color(0xFF5FA62C)
       ..style = PaintingStyle.fill;
+    
+    final linePaint1 = Paint()
+      ..color = const Color(0xFF5FA62C)
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke;
+
+    final linePaint2 = Paint()
+       ..color = const Color(0xFF4A90E2)
+       ..strokeWidth = 2.5
+       ..style = PaintingStyle.stroke;
 
     // Draw axes
     final leftMargin = 40.0;
     final bottomMargin = 30.0;
-    final rightMargin = 20.0;
-    final topMargin = 20.0;
+    final rightMargin = 10.0;
+    final topMargin = 10.0;
 
     // Y-axis
     canvas.drawLine(
@@ -450,11 +446,11 @@ class StockGraphPainter extends CustomPainter {
 
     // Y-axis labels
     final yLabels = [
-      '0 bales',
-      '80 bales',
-      '160 bales',
-      '240 bales',
-      '320 bales'
+      '0',
+      '80',
+      '160',
+      '240',
+      '320'
     ];
     for (int i = 0; i < yLabels.length; i++) {
       final y = size.height -
@@ -463,7 +459,7 @@ class StockGraphPainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
           text: yLabels[i],
-          style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+          style: TextStyle(fontSize: 10, color: Colors.grey[500]),
         ),
         textDirection: TextDirection.ltr,
       );
@@ -478,13 +474,13 @@ class StockGraphPainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
           text: xLabels[i],
-          style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+          style: TextStyle(fontSize: 10, color: Colors.grey[500]),
         ),
         textDirection: TextDirection.ltr,
       );
       textPainter.layout();
       textPainter.paint(canvas,
-          Offset(x - textPainter.width / 2, size.height - bottomMargin + 5));
+          Offset(x - textPainter.width / 2, size.height - bottomMargin + 6));
     }
 
     // Draw data points and lines
@@ -508,11 +504,11 @@ class StockGraphPainter extends CustomPainter {
 
     // Draw first line
     _drawDataLine(canvas, dataPoints, size, leftMargin, bottomMargin, topMargin,
-        rightMargin, paint, pointPaint);
+        rightMargin, linePaint1, pointPaint);
 
     // Draw second line
     _drawDataLine(canvas, dataPoints2, size, leftMargin, bottomMargin,
-        topMargin, rightMargin, paint, pointPaint);
+        topMargin, rightMargin, linePaint2, pointPaint);
   }
 
   void _drawDataLine(
@@ -530,26 +526,25 @@ class StockGraphPainter extends CustomPainter {
 
     for (int i = 0; i < dataPoints.length; i++) {
       final point = dataPoints[i];
+      final x = leftMargin +
           (point['x']! * (size.width - leftMargin - rightMargin) / 5);
-      final y = size.height -e.width - leftMargin - rightMargin) / 5);
-          bottomMargin -ght -
+      // Normalized Y
+      final y = size.height -
+          bottomMargin -
           ((point['y']! / 320.0) * (size.height - bottomMargin - topMargin));
-          ((point['y']! / 320.0) * (size.height - bottomMargin - topMargin));
+
       if (firstPoint) {
         path.moveTo(x, y);
         firstPoint = false;
-      } else {oint = false;
+      } else {
         path.lineTo(x, y);
-      } path.lineTo(x, y);
       }
-      // Draw point
-      canvas.drawCircle(Offset(x, y), 3, pointPaint);
-    } canvas.drawCircle(Offset(x, y), 3, pointPaint);
+      
+      canvas.drawCircle(Offset(x, y), 3.5, pointPaint);
     }
     canvas.drawPath(path, paint);
-  } canvas.drawPath(path, paint);
   }
+
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
-} bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

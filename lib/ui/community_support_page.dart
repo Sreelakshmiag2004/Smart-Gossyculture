@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'tutorials_help_page.dart';
-import 'dashboard.dart';
-import 'Harvest.dart';
-import 'pest_alerts_page.dart';
-import 'notifications_page.dart';
-import 'settings_profile_page.dart';
+import 'community_forum_page.dart';
 
 class CommunitySupportPage extends StatefulWidget {
   const CommunitySupportPage({super.key});
@@ -14,17 +10,15 @@ class CommunitySupportPage extends StatefulWidget {
 }
 
 class _CommunitySupportPageState extends State<CommunitySupportPage> {
-  List<bool> faqExpanded = [false, false, false, false];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFAFAFA),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
@@ -32,63 +26,73 @@ class _CommunitySupportPageState extends State<CommunitySupportPage> {
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontSize: 20,
           ),
         ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // We're Here to Help Section
+            // Header Section
             const Text(
               'We\'re Here to Help',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 20,
+                fontSize: 24,
                 color: Colors.black87,
+                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 8),
             const Text(
-              'Find answers to your questions, connect with experts, or reach out to our support team. Your success is our priority.',
+              'Find answers, connect with experts, or reach out to our team.',
               style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
+                fontSize: 15,
+                color: Colors.black54,
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 24),
-
-            // Helpline Card
-            _buildSupportCard(
-              icon: Icons.phone,
-              title: 'Helpline',
-              description:
-                  'Speak directly with our support team for immediate assistance.',
-              buttonText: 'Call Now',
-              onButtonPressed: () {
-                // Handle call action
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Chat with Experts Card
-            _buildSupportCard(
-              icon: Icons.chat_bubble,
-              title: 'Chat with Experts',
-              description:
-                  'Get personalized advice from agricultural specialists.',
-              buttonText: 'Chat Now',
-              onButtonPressed: () {
-                // Handle chat action
-              },
-            ),
             const SizedBox(height: 32),
 
-            // Frequently Asked Questions Section
+            // Support Cards Row
+            Row(
+              children: [
+                Expanded(
+                  child: _buildSupportCard(
+                    icon: Icons.headset_mic_outlined,
+                    title: 'Helpline',
+                    subtitle: '24/7 Support',
+                    color: const Color(0xFF5FA62C),
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Calling support...')),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildSupportCard(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    title: 'Live Chat',
+                    subtitle: 'Talk to Experts',
+                    color: const Color(0xFF4A90E2),
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Starting chat...')),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 32),
+
+            // FAQ Section
             const Text(
               'Frequently Asked Questions',
               style: TextStyle(
@@ -99,32 +103,28 @@ class _CommunitySupportPageState extends State<CommunitySupportPage> {
             ),
             const SizedBox(height: 16),
 
-            // FAQ Items
-            _buildFAQItem(
-              index: 0,
-              question: 'How do I track my cotton boll count accurately?',
-            ),
-            const SizedBox(height: 12),
+            _buildFAQGroup([
+              _buildExpansionTile(
+                title: 'How do I track my cotton boll count accurately?',
+                content: 'To track your boll count, go to the "Monitor" tab on the dashboard. Ensure your camera lens is clean and take a photo of your crop from 1 meter away. Our AI will analyze the image and estimate the boll count per plant within seconds.',
+              ),
+              _buildExpansionTile(
+                title: 'What types of pests can BollBot detect?',
+                content: 'BollBot is currently trained to detect: \n\n• Pink Bollworm\n• Aphids\n• Thrips\n• Whiteflies\n\nWe are constantly updating our database to include more regional pests.',
+              ),
+              _buildExpansionTile(
+                title: 'How do I connect with buyers?',
+                content: 'Navigate to the "Market" tab. You will see a list of verified buyers. Tap on any buyer card to view their requirements and start a secure chat or call directly from the app.',
+              ),
+              _buildExpansionTile(
+                title: 'My device is not connecting. What should I do?',
+                content: '1. Ensure Bluetooth is enabled on your phone.\n2. Check if the sensor battery is charged.\n3. Move closer to the device (within 10 meters).\n4. Restart the app and try pairing again in Settings > Devices.',
+              ),
+            ]),
 
-            _buildFAQItem(
-              index: 1,
-              question: 'What types of pests can BollBot detect?',
-            ),
-            const SizedBox(height: 12),
-
-            _buildFAQItem(
-              index: 2,
-              question: 'How do I connect with buyers through the app?',
-            ),
-            const SizedBox(height: 12),
-
-            _buildFAQItem(
-              index: 3,
-              question: 'My device is not connecting. What should I do?',
-            ),
             const SizedBox(height: 32),
 
-            // Additional Resources Section
+            // Resources Section
             const Text(
               'Additional Resources',
               style: TextStyle(
@@ -135,88 +135,31 @@ class _CommunitySupportPageState extends State<CommunitySupportPage> {
             ),
             const SizedBox(height: 16),
 
-            // BollBot Tutorials & Guides
-            _buildResourceItem(
-              icon: Icons.menu_book,
-              iconColor: Colors.blue,
-              title: 'BollBot Tutorials & Guides',
+            _buildResourceTile(
+              icon: Icons.play_circle_outline_rounded,
+              title: 'Video Tutorials',
+              subtitle: 'Learn how to use app features',
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const TutorialsHelpPage(),
-                  ),
+                 Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const TutorialsHelpPage()),
                 );
               },
             ),
             const SizedBox(height: 12),
-
-            // Community Forums
-            _buildResourceItem(
-              icon: Icons.people,
-              iconColor: Colors.blue,
-              title: 'Community Forums',
+            _buildResourceTile(
+              icon: Icons.forum_outlined,
+              title: 'Community Forum',
+              subtitle: 'Discuss with other farmers',
               onTap: () {
-                // Handle community forums navigation
+                 Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const CommunityForumPage()),
+                );
               },
             ),
+            
             const SizedBox(height: 24),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex:
-            4, // Settings tab is active (since this is accessed from settings)
-        selectedItemColor: const Color(0xFF5FA62C),
-        unselectedItemColor: Colors.black38,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const Dashboard()),
-            );
-          } else if (index == 1) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const Harvest()),
-            );
-          } else if (index == 2) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const PestAlertsPage()),
-            );
-          } else if (index == 3) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                  builder: (context) => const NotificationsPage()),
-            );
-          } else if (index == 4) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                  builder: (context) => const SettingsProfilePage()),
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt_outlined),
-            label: 'Logs',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bug_report_outlined),
-            label: 'Pests',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_outlined),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            label: 'Settings',
-          ),
-        ],
       ),
     );
   }
@@ -224,182 +167,175 @@ class _CommunitySupportPageState extends State<CommunitySupportPage> {
   Widget _buildSupportCard({
     required IconData icon,
     required String title,
-    required String description,
-    required String buttonText,
-    required VoidCallback onButtonPressed,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            color: Colors.green,
-            size: 32,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-              height: 1.4,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onButtonPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                elevation: 0,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 0,
+       child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.withOpacity(0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              child: Text(
-                buttonText,
+            ],
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  color: Colors.black87,
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFAQItem({
-    required int index,
-    required String question,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 2,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () {
-            setState(() {
-              faqExpanded[index] = !faqExpanded[index];
-            });
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    question,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
                 ),
-                Icon(
-                  faqExpanded[index]
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  color: Colors.grey,
-                  size: 20,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildResourceItem({
+  Widget _buildFAQGroup(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildExpansionTile({required String title, required String content}) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        iconColor: const Color(0xFF5FA62C),
+        collapsedIconColor: Colors.grey,
+        children: [
+          Text(
+            content,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black54,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResourceTile({
     required IconData icon,
-    required Color iconColor,
     required String title,
+    required String subtitle,
     required VoidCallback onTap,
   }) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 2,
-            offset: const Offset(0, 1),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
           onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: iconColor,
-                  size: 24,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE9F7E5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: const Color(0xFF5FA62C), size: 24),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const Icon(
-                  Icons.chevron_right,
-                  color: Colors.grey,
-                  size: 20,
-                ),
+                const Icon(Icons.chevron_right, color: Colors.grey),
               ],
             ),
           ),

@@ -3,10 +3,24 @@ import 'dashboard.dart';
 import 'Harvest.dart';
 import 'pest_alerts_page.dart';
 import 'notifications_page.dart';
-import 'settings_profile_page.dart';
+
+import 'package:country_code_picker/country_code_picker.dart';
 
 class EditProfilePage extends StatefulWidget {
-  const EditProfilePage({super.key});
+  final String currentName;
+  final String currentPhone;
+  final String currentEmail;
+  final String currentFarmName;
+  final String currentVariety;
+
+  const EditProfilePage({
+    super.key,
+    required this.currentName,
+    required this.currentPhone,
+    required this.currentEmail,
+    required this.currentFarmName,
+    required this.currentVariety,
+  });
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
@@ -15,12 +29,31 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   
-  // Form controllers with default values
-  final TextEditingController _nameController = TextEditingController(text: 'John Doe');
-  final TextEditingController _phoneController = TextEditingController(text: '+1 234 567 8900');
-  final TextEditingController _emailController = TextEditingController(text: 'john.doe@example.com');
-  final TextEditingController _farmNameController = TextEditingController(text: 'Cotton Farm, Green Valley');
-  final TextEditingController _cottonVarietyController = TextEditingController(text: 'Hybrid Cotton');
+  // Form controllers
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _emailController;
+  late TextEditingController _farmNameController;
+  late TextEditingController _cottonVarietyController;
+  String _countryCode = '+1'; // Default
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.currentName);
+    // Basic logic to split existing phone number if it has space
+    if (widget.currentPhone.contains(' ')) {
+       var parts = widget.currentPhone.split(' ');
+       _countryCode = parts[0];
+       _phoneController = TextEditingController(text: parts.sublist(1).join(' '));
+    } else {
+       _phoneController = TextEditingController(text: widget.currentPhone);
+    }
+    
+    _emailController = TextEditingController(text: widget.currentEmail);
+    _farmNameController = TextEditingController(text: widget.currentFarmName);
+    _cottonVarietyController = TextEditingController(text: widget.currentVariety);
+  }
 
   @override
   void dispose() {
@@ -48,7 +81,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontSize: 20,
           ),
         ),
         centerTitle: true,
@@ -70,6 +103,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -152,9 +186,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 label: 'Phone Number',
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
+                isPhone: true, // Flag for phone layout
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your phone number';
+                  }
+                  if (!RegExp(r'^[\d\s-]{7,20}$').hasMatch(value)) {
+                    return 'Enter a valid phone number (7-15 digits)';
                   }
                   return null;
                 },
@@ -267,58 +305,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 4, // Settings tab is active (since this is accessed from settings)
-        selectedItemColor: const Color(0xFF5FA62C),
-        unselectedItemColor: Colors.black38,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const Dashboard()),
-            );
-          } else if (index == 1) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const Harvest()),
-            );
-          } else if (index == 2) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const PestAlertsPage()),
-            );
-          } else if (index == 3) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const NotificationsPage()),
-            );
-          } else if (index == 4) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const SettingsProfilePage()),
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt_outlined),
-            label: 'Logs',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bug_report_outlined),
-            label: 'Pests',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_outlined),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            label: 'Settings',
-          ),
-        ],
-      ),
+
     );
   }
 
@@ -328,38 +315,83 @@ class _EditProfilePageState extends State<EditProfilePage> {
     required IconData icon,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    bool isPhone = false,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Colors.grey[600]),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF5FA62C), width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        filled: true,
-        fillColor: Colors.grey[50],
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isPhone)
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Row(
+              children: [
+                CountryCodePicker(
+                  onChanged: (country) {
+                    setState(() {
+                      _countryCode = country.dialCode ?? '+1';
+                    });
+                  },
+                  initialSelection: _countryCode,
+                  favorite: const ['+1', 'US', 'IN'],
+                  showCountryOnly: false,
+                  showOnlyCountryWhenClosed: false,
+                  alignLeft: false,
+                  padding: const EdgeInsets.all(0),
+                ),
+                Expanded(
+                  child: TextFormField(
+                    controller: controller,
+                    keyboardType: keyboardType,
+                    validator: validator,
+                    decoration: InputDecoration(
+                      hintText: label,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      // Remove label from here as it's cleaner without internal label when combined
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            validator: validator,
+            decoration: InputDecoration(
+              labelText: label,
+              prefixIcon: Icon(icon, color: Colors.grey[600]),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF5FA62C), width: 2),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.red),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.red, width: 2),
+              ),
+              filled: true,
+              fillColor: Colors.grey[50],
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            ),
+          ),
+      ],
     );
   }
 
@@ -373,8 +405,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
       );
       
-      // Navigate back to settings page
-      Navigator.of(context).pop();
+      Navigator.of(context).pop({
+        'name': _nameController.text,
+        'phone': '$_countryCode ${_phoneController.text.replaceAll(RegExp(r'[\s-]'), '')}',
+        'email': _emailController.text,
+        'farmName': _farmNameController.text,
+        'variety': _cottonVarietyController.text,
+      });
     }
   }
 }
