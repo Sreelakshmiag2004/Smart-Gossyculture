@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../core/api/failure_messages.dart';
+import '../core/app_services.dart';
+import '../core/auth/session_controller.dart';
+import 'onboarding_gate_page.dart';
 import 'sign_in_page.dart';
 
 class LaunchPage extends StatefulWidget {
@@ -12,6 +16,62 @@ class _LaunchPageState extends State<LaunchPage> with SingleTickerProviderStateM
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  bool _started = false;
+  bool _unreachable = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_started) {
+      _started = true;
+      _start();
+    }
+  }
+
+  /// Shows the splash for 3 seconds while looking for a stored session, then continues:
+  /// no session -> sign-in; accepted session -> onboarding check / dashboard;
+  /// rejected session -> sign-in with a notice; backend unreachable -> retry here.
+  Future<void> _start() async {
+    final session = AppScope.of(context).session;
+    final results = await Future.wait<Object?>([
+      session.restore(),
+      Future<void>.delayed(const Duration(seconds: 3)),
+    ]);
+    if (!mounted) return;
+    _continueWith(results.first as SessionRestore);
+  }
+
+  Future<void> _retry() async {
+    setState(() => _unreachable = false);
+    final result = await AppScope.of(context).session.restore();
+    if (!mounted) return;
+    _continueWith(result);
+  }
+
+  void _continueWith(SessionRestore result) {
+    switch (result) {
+      case SessionRestore.none:
+        _goTo(const SignInPage());
+      case SessionRestore.expired:
+        _goTo(const SignInPage(notice: sessionExpiredMessage));
+      case SessionRestore.restored:
+        _goTo(const OnboardingGatePage());
+      case SessionRestore.unreachable:
+        setState(() => _unreachable = true);
+    }
+  }
+
+  void _goTo(Widget page) {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 800),
+        pageBuilder: (_, __, ___) => page,
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -31,21 +91,6 @@ class _LaunchPageState extends State<LaunchPage> with SingleTickerProviderStateM
     );
 
     _controller.forward();
-
-    // Navigate after delay
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 800),
-            pageBuilder: (_, __, ___) => const SignInPage(),
-            transitionsBuilder: (_, animation, __, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-          ),
-        );
-      }
-    });
   }
 
   @override
@@ -176,14 +221,31 @@ class _LaunchPageState extends State<LaunchPage> with SingleTickerProviderStateM
               child: Center(
                 child: Column(
                   children: [
-                    const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        strokeWidth: 2.5,
+                    if (_unreachable) ...[
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          'Cannot reach the server. Check your internet connection.',
+                          key: Key('launchUnreachable'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        key: const Key('launchRetry'),
+                        onPressed: _retry,
+                        child: const Text('Try again', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ] else
+                      const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          strokeWidth: 2.5,
+                        ),
+                      ),
                     const SizedBox(height: 24),
                     Text(
                       'Powered by BollBot AI',

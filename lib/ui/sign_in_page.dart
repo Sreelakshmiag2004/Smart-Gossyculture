@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
-import 'dashboard.dart'; // Add this import
+import '../core/api/api_failure.dart';
+import '../core/api/failure_messages.dart';
+import '../core/app_services.dart';
+import '../core/validators.dart';
+import 'otp_verify_page.dart';
 
 class SignInPage extends StatefulWidget {
-  const SignInPage({super.key});
+  const SignInPage({super.key, this.notice});
+
+  /// Shown above the form, e.g. after the session has ended.
+  final String? notice;
 
   @override
   State<SignInPage> createState() => _SignInPageState();
@@ -11,6 +18,44 @@ class SignInPage extends StatefulWidget {
 class _SignInPageState extends State<SignInPage> {
   bool isPhoneSelected = true;
   final TextEditingController phoneController = TextEditingController();
+  bool _requesting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  /// Asks the backend to issue a sign-in code for the entered number, then opens code entry.
+  Future<void> _continue() async {
+    if (_requesting) return;
+    if (!isPhoneSelected) {
+      setState(() => _error = 'Sign-in with email is not available. Please use your phone number.');
+      return;
+    }
+    final phone = normalizePhone(phoneController.text);
+    if (phone == null) {
+      setState(() => _error = 'Enter your full phone number with the country code, for example +91 98765 43210.');
+      return;
+    }
+    setState(() {
+      _requesting = true;
+      _error = null;
+    });
+    try {
+      await AppScope.of(context).session.requestCode(phone);
+      if (!mounted) return;
+      setState(() => _requesting = false);
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) => OtpVerifyPage(phone: phone)));
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      setState(() {
+        _requesting = false;
+        _error = messageForFailure(failure, context: FailureContext.requestCode);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +101,20 @@ class _SignInPageState extends State<SignInPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
+                if (widget.notice != null) ...[
+                  Container(
+                    key: const Key('signInNotice'),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7E6),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFFD591)),
+                    ),
+                    child: Text(widget.notice!, style: const TextStyle(color: Color(0xFF874D00), fontSize: 14)),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFF5F5F5),
@@ -66,7 +125,10 @@ class _SignInPageState extends State<SignInPage> {
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
-                            setState(() => isPhoneSelected = true);
+                            setState(() {
+                              isPhoneSelected = true;
+                              _error = null;
+                            });
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
@@ -103,7 +165,10 @@ class _SignInPageState extends State<SignInPage> {
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
-                            setState(() => isPhoneSelected = false);
+                            setState(() {
+                              isPhoneSelected = false;
+                              _error = null;
+                            });
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
@@ -151,14 +216,19 @@ class _SignInPageState extends State<SignInPage> {
                 ),
                 const SizedBox(height: 8),
                 TextField(
+                  key: const Key('phoneField'),
                   controller: phoneController,
+                  enabled: !_requesting,
                   keyboardType: isPhoneSelected
                       ? TextInputType.phone
                       : TextInputType.emailAddress,
+                  onSubmitted: (_) => _continue(),
                   decoration: InputDecoration(
                     hintText: isPhoneSelected
-                        ? 'Enter your phone number'
+                        ? 'Phone number with country code'
                         : 'Enter your email address',
+                    errorText: _error,
+                    errorMaxLines: 3,
                     prefixIcon: Icon(
                       isPhoneSelected ? Icons.phone : Icons.email,
                       color: Colors.black38,
@@ -173,20 +243,21 @@ class _SignInPageState extends State<SignInPage> {
                       backgroundColor: Theme.of(context).primaryColor,
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (context) => const Dashboard(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
+                    key: const Key('continueButton'),
+                    onPressed: _requesting ? null : _continue,
+                    child: _requesting
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                          )
+                        : const Text(
+                            'Continue',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 24),

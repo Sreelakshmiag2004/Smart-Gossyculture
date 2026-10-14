@@ -7,6 +7,7 @@ import 'Harvest.dart';
 import 'pest_alerts_page.dart';
 import 'notifications_page.dart';
 
+import '../core/app_services.dart';
 import 'edit_profile_page.dart';
 import 'sign_in_page.dart';
 
@@ -407,9 +408,14 @@ class _SettingsProfilePageState extends State<SettingsProfilePage> {
               ),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushAndRemoveUntil(
+              onPressed: () async {
+                // Revoke the session on the backend (best effort), delete the stored tokens,
+                // then return to sign-in.
+                final navigator = Navigator.of(context);
+                final session = AppScope.of(this.context).session;
+                navigator.pop();
+                await session.logout();
+                navigator.pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const SignInPage()),
                   (route) => false,
                 );

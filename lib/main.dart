@@ -1,16 +1,63 @@
 import 'package:flutter/material.dart';
+import 'core/api/failure_messages.dart';
+import 'core/app_config.dart';
+import 'core/app_services.dart';
 import 'ui/launch_page.dart';
+import 'ui/sign_in_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    runApp(MyApp(services: AppServices.create(config: AppConfig.fromEnvironment())));
+  } on ConfigurationError catch (error) {
+    runApp(_ConfigurationErrorApp(message: error.message));
+  }
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  const MyApp({super.key, required this.services});
+
+  final AppServices services;
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    // A signed-in user whose session is no longer accepted by the backend is returned to the
+    // sign-in page from wherever they are. The stored tokens have already been deleted.
+    widget.services.session.onForcedSignOut = _returnToSignIn;
+  }
+
+  @override
+  void dispose() {
+    widget.services.session.onForcedSignOut = null;
+    super.dispose();
+  }
+
+  void _returnToSignIn() {
+    _navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const SignInPage(notice: sessionExpiredMessage)),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    return AppScope(
+      services: widget.services,
+      child: _buildApp(),
+    );
+  }
+
+  Widget _buildApp() {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'Smart Gossy Culture App',
       theme: ThemeData(
         useMaterial3: true,
@@ -49,6 +96,28 @@ class MyApp extends StatelessWidget {
       ),
       home: const LaunchPage(),
       debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+/// Shown instead of the app when the build has no usable server address.
+class _ConfigurationErrorApp extends StatelessWidget {
+  const _ConfigurationErrorApp({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text('This app is not configured correctly.\n$message', textAlign: TextAlign.center),
+          ),
+        ),
+      ),
     );
   }
 }

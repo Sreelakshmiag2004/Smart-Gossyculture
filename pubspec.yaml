@@ -19,6 +19,10 @@ dependencies:
   open_file: ^3.3.2
   flutter_file_dialog: ^3.0.2
   country_code_picker: ^3.0.0
+  # Phase 1 integration foundation (approved plan; not yet used by Dart code):
+  dio: ^5.11.1
+  web_socket_channel: ^3.0.3
+  flutter_secure_storage: ^10.3.4
 
 dev_dependencies:
   flutter_test:
